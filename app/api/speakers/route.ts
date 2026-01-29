@@ -11,10 +11,8 @@ export async function GET() {
 
     try {
         const speakers = await prisma.speaker.findMany({
-            orderBy: [
-                { type: "asc" },
-                { name: "asc" }
-            ]
+            include: { groups: true },
+            orderBy: { name: 'asc' }
         })
 
         return NextResponse.json(speakers)
@@ -33,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json()
-        const { name, type } = body
+        const { name, type, groupIds } = body
 
         if (!name || typeof name !== "string") {
             return NextResponse.json({ error: "Name is required" }, { status: 400 })
@@ -46,7 +44,11 @@ export async function POST(request: NextRequest) {
             data: {
                 name: name.trim(),
                 type: speakerType,
-            }
+                groups: groupIds ? {
+                    connect: groupIds.map((id: string) => ({ id }))
+                } : undefined
+            },
+            include: { groups: true }
         })
 
         return NextResponse.json(speaker)

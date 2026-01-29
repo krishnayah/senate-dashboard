@@ -59,11 +59,55 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+model Group {
+  id        String    @id @default(cuid())
+  name      String    @unique // e.g., "Senate", "EBoard"
+  speakers  Speaker[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
 model Speaker {
   id         String      @id @default(cuid())
   name       String
-  type       String      @default("guest") // "senate", "guest", "faculty"
+  type       String      @default("guest") // Deprecated: Migration will move this to Groups
   speakCount Int         @default(0)
+  groups     Group[]
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
+  
+  // Relations
+  meetingAttendance MeetingAttendance[]
+}
+
+model Committee {
+  id        String    @id @default(cuid())
+  name      String
+  meetings  Meeting[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Meeting {
+  id          String              @id @default(cuid())
+  title       String
+  date        DateTime            @default(now())
+  notes       String?
+  committeeId String
+  committee   Committee           @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  attendance  MeetingAttendance[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model MeetingAttendance {
+  id        String   @id @default(cuid())
+  meetingId String
+  speakerId String
+  meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  speaker   Speaker  @relation(fields: [speakerId], references: [id], onDelete: Cascade)
+  isPresent Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([meetingId, speakerId])
 }
