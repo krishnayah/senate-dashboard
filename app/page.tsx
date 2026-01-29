@@ -9,9 +9,13 @@ export default function Home() {
         <h1 className="text-4xl font-bold tracking-tighter sm:text-6xl text-blue-900 dark:text-blue-100">
           Senate Dashboard
         </h1>
-        <p className="max-w-[600px] text-muted-foreground md:text-xl">
-          developed by jordan uhhh guys its like a cool queue. login trust
+        <p className="max-w-[600px] text-muted-foreground md:text-sm">
+          Developed by Jordan Krishnayah
         </p>
+        <p className="max-w-[600px] text-muted-foreground md:text-xl">
+          Manage speaking queues, take committee attendance, and more.
+        </p>
+
         <div className="flex gap-4">
           <AuthButton />
         </div>
