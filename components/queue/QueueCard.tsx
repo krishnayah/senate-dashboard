@@ -69,7 +69,7 @@ export function QueueCard({
 
     return (
         <div className="rounded-xl border bg-card shadow-lg overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+            <div className="bg-gradient-to-r from-rose-600 to-rose-700 px-6 py-4">
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-bold text-white">{name}</h2>
                     <div className="flex items-center gap-2">
@@ -107,7 +107,7 @@ export function QueueCard({
                         <Button
                             size="sm"
                             onClick={handleOpenSubqueue}
-                            className="bg-white text-blue-700 hover:bg-white/90"
+                            className="bg-white text-rose-700 hover:bg-white/90"
                         >
                             Create
                         </Button>
@@ -140,14 +140,14 @@ export function QueueCard({
                             <div
                                 key={item.id}
                                 className={`flex items-center justify-between rounded-lg px-4 py-3 group transition-colors ${index === 0
-                                        ? "bg-green-100 dark:bg-green-900/30 border-2 border-green-500"
-                                        : "bg-muted/50 hover:bg-muted"
+                                    ? "bg-green-100 dark:bg-green-900/30 border-2 border-green-500"
+                                    : "bg-muted/50 hover:bg-muted"
                                     }`}
                             >
                                 <div className="flex items-center gap-3">
                                     <span className={`flex items-center justify-center w-8 h-8 rounded-full font-semibold text-sm ${index === 0
-                                            ? "bg-green-500 text-white"
-                                            : "bg-blue-100 text-blue-700"
+                                        ? "bg-green-500 text-white"
+                                        : "bg-rose-100 text-rose-700"
                                         }`}>
                                         {index + 1}
                                     </span>

@@ -3,16 +3,11 @@ import Discord from "next-auth/providers/discord"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import prisma from "./prisma"
 
-const REQUIRED_GUILD_ID = process.env.DISCORD_GUILD_ID!
-const REQUIRED_ROLE_ID = process.env.DISCORD_ROLE_ID!
+const REQUIRED_GUILD_ID = "1072587144503238679"
+const REQUIRED_ROLE_ID = "1353764148583993475"
 
 async function checkDiscordRole(accessToken: string, userId: string): Promise<boolean> {
     try {
-        if (!REQUIRED_GUILD_ID || !REQUIRED_ROLE_ID) {
-            console.error("Missing Discord Guild or Role ID in environment variables")
-            return false
-        }
-
         // First, check if user is in the guild
         const memberResponse = await fetch(
             `https://discord.com/api/v10/users/@me/guilds/${REQUIRED_GUILD_ID}/member`,

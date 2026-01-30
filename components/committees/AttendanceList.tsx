@@ -22,7 +22,7 @@ export function AttendanceList({ attendance, allSpeakers, onAddAttendee, onRemov
     const availableSpeakers = allSpeakers.filter(s =>
         !(attendance || []).some(a => a.speakerId === s.id) &&
         s.name.toLowerCase().includes(searchMember.toLowerCase())
-    ).slice(0, 10)
+    )
 
     const handleNewSpeakerCreated = (speaker: Speaker) => {
         onSpeakerCreated(speaker)
@@ -57,7 +57,7 @@ export function AttendanceList({ attendance, allSpeakers, onAddAttendee, onRemov
                                 </div>
                                 <div className="max-h-60 overflow-y-auto p-1">
                                     <div
-                                        className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground font-medium text-blue-600 border-b mb-1"
+                                        className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground font-medium text-rose-600 border-b mb-1"
                                         onClick={() => {
                                             setShowMemberMenu(false)
                                             setShowCreateModal(true)

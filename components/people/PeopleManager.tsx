@@ -24,6 +24,10 @@ export function PeopleManager() {
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingPerson, setEditingPerson] = useState<Person | null>(null)
+    const [viewingPerson, setViewingPerson] = useState<Person | null>(null)
+    const [membershipData, setMembershipData] = useState<any[]>([])
+    const [isMembershipModalOpen, setIsMembershipModalOpen] = useState(false)
+    const [membershipLoading, setMembershipLoading] = useState(false)
 
     // Form State
     const [formData, setFormData] = useState({ name: "", groupIds: [] as string[] })
@@ -101,6 +105,23 @@ export function PeopleManager() {
         setIsModalOpen(true)
     }
 
+    const openMembership = async (person: Person) => {
+        setViewingPerson(person)
+        setIsMembershipModalOpen(true)
+        setMembershipLoading(true)
+        setMembershipData([])
+        try {
+            const res = await fetch(`/api/people/${person.id}/attendance`)
+            if (res.ok) {
+                setMembershipData(await res.json())
+            }
+        } catch (e) {
+            console.error(e)
+        } finally {
+            setMembershipLoading(false)
+        }
+    }
+
     const toggleGroupSelection = (groupId: string) => {
         setFormData(prev => {
             const exists = prev.groupIds.includes(groupId)
@@ -170,6 +191,7 @@ export function PeopleManager() {
                                         </div>
                                     </td>
                                     <td className="p-4 text-right">
+                                        <Button variant="ghost" size="sm" onClick={() => openMembership(person)}>View Membership</Button>
                                         <Button variant="ghost" size="sm" onClick={() => openEdit(person)}>Edit</Button>
                                         <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDelete(person.id)}>Delete</Button>
                                     </td>
@@ -216,6 +238,48 @@ export function PeopleManager() {
                                 <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
                                 <Button onClick={handleSave}>Save</Button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Membership Modal */}
+            {isMembershipModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in">
+                    <div className="w-full max-w-md bg-background rounded-lg shadow-lg border p-6 flex flex-col max-h-[80vh]">
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 className="text-lg font-semibold">Committee Attendance</h3>
+                                <p className="text-xs text-muted-foreground">{viewingPerson?.name}</p>
+                            </div>
+                            <Button variant="ghost" size="sm" onClick={() => setIsMembershipModalOpen(false)}>×</Button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto">
+                            {membershipLoading ? (
+                                <div className="py-8 text-center text-sm text-muted-foreground">Loading...</div>
+                            ) : membershipData.length === 0 ? (
+                                <div className="py-8 text-center text-sm text-muted-foreground italic">No committee attendance recorded.</div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {membershipData.map((comm) => (
+                                        <div key={comm.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                                            <div>
+                                                <div className="font-medium text-sm">{comm.name}</div>
+                                                <div className="text-[10px] text-muted-foreground">
+                                                    Attended {comm.attendanceCount} meeting{comm.attendanceCount > 1 ? 's' : ''}
+                                                </div>
+                                            </div>
+                                            <div className="text-[10px] text-muted-foreground bg-background rounded px-1.5 py-0.5 border shadow-sm">
+                                                Last: {new Date(comm.lastAttended).toLocaleDateString()}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex justify-end pt-4 mt-auto">
+                            <Button size="sm" onClick={() => setIsMembershipModalOpen(false)}>Close</Button>
                         </div>
                     </div>
                 </div>

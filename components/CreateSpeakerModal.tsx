@@ -105,7 +105,7 @@ export function CreateSpeakerModal({ isOpen, onClose, onCreated }: CreateSpeaker
                                     <label
                                         key={group.id}
                                         className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-all border ${selectedGroupIds.includes(group.id)
-                                            ? 'bg-emerald-50/50 text-emerald-800 border-emerald-100'
+                                            ? 'bg-emerald-50/50 text-emerald-800 border-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/50'
                                             : 'hover:bg-muted/50 border-transparent'
                                             }`}
                                     >

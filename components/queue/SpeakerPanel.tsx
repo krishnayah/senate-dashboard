@@ -166,7 +166,7 @@ export function SpeakerPanel({ currentQueueId, onSpeakerAdded, onAddToQueue }: S
                 </div>
 
                 {/* Add Speaker Form */}
-                <div className="space-y-1.5 shrink-0 bg-muted/10 p-2 rounded-md border border-dotted border-emerald-100">
+                <div className="space-y-1.5 shrink-0 bg-muted/10 p-2 rounded-md border border-dotted border-emerald-100 dark:border-emerald-900/30">
                     <input
                         type="text"
                         value={newName}
@@ -207,7 +207,7 @@ export function SpeakerPanel({ currentQueueId, onSpeakerAdded, onAddToQueue }: S
                             <div key={section.id} className="space-y-0.5">
                                 <button
                                     onClick={() => toggleSection(section.id)}
-                                    className="group/header w-full flex items-center justify-between py-1 text-[9px] font-black uppercase text-emerald-900/40 tracking-widest hover:bg-muted/50 rounded px-1 transition-colors"
+                                    className="group/header w-full flex items-center justify-between py-1 text-[9px] font-black uppercase text-emerald-900/40 dark:text-emerald-400/50 tracking-widest hover:bg-muted/50 rounded px-1 transition-colors"
                                 >
                                     <div className="flex items-center gap-1.5">
                                         <span className={`transition-transform duration-200 text-[7px] ${collapsedSections[section.id] ? '-rotate-90' : ''}`}>
@@ -249,7 +249,7 @@ export function SpeakerPanel({ currentQueueId, onSpeakerAdded, onAddToQueue }: S
                                                         <button
                                                             onClick={() => handleAddToQueue(speaker)}
                                                             disabled={!currentQueueId}
-                                                            className="flex-1 text-left text-[12px] font-medium hover:text-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed leading-tight"
+                                                            className="flex-1 text-left text-[12px] font-medium hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed leading-tight"
                                                         >
                                                             {speaker.name}
                                                         </button>

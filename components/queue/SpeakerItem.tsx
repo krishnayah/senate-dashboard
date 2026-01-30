@@ -55,7 +55,7 @@ export function SpeakerItem({ speaker, currentQueueId, onAddToQueue, onUpdate, o
             <button
                 onClick={() => onAddToQueue(speaker)}
                 disabled={!currentQueueId}
-                className="flex-1 text-left text-[12px] font-medium hover:text-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed leading-tight"
+                className="flex-1 text-left text-[12px] font-medium hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed leading-tight"
             >
                 {speaker.name}
             </button>

@@ -30,7 +30,7 @@ export function SpeakerSection({
         <div className="space-y-0.5">
             <button
                 onClick={onToggle}
-                className="group/header w-full flex items-center justify-between py-1 text-[9px] font-black uppercase text-emerald-900/40 tracking-widest hover:bg-muted/50 rounded px-1 transition-colors"
+                className="group/header w-full flex items-center justify-between py-1 text-[9px] font-black uppercase text-emerald-900/40 dark:text-emerald-400/50 tracking-widest hover:bg-muted/50 rounded px-1 transition-colors"
                 aria-expanded={!isCollapsed}
             >
                 <div className="flex items-center gap-1.5">
