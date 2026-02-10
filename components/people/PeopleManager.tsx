@@ -248,29 +248,51 @@ export function PeopleManager() {
                     <div className="w-full max-w-md bg-background rounded-lg shadow-lg border p-6 flex flex-col max-h-[80vh]">
                         <div className="flex items-center justify-between mb-4">
                             <div>
-                                <h3 className="text-lg font-semibold">Committee Attendance</h3>
+                                <h3 className="text-lg font-semibold">Meeting Attendance</h3>
                                 <p className="text-xs text-muted-foreground">{viewingPerson?.name}</p>
                             </div>
-                            <Button variant="ghost" size="sm" onClick={() => setIsMembershipModalOpen(false)}>×</Button>
+                            <Button variant="ghost" size="sm" onClick={() => setIsMembershipModalOpen(false)}>x</Button>
                         </div>
 
                         <div className="flex-1 overflow-y-auto">
                             {membershipLoading ? (
                                 <div className="py-8 text-center text-sm text-muted-foreground">Loading...</div>
                             ) : membershipData.length === 0 ? (
-                                <div className="py-8 text-center text-sm text-muted-foreground italic">No committee attendance recorded.</div>
+                                <div className="py-8 text-center text-sm text-muted-foreground italic">No meeting attendance recorded.</div>
                             ) : (
                                 <div className="space-y-3">
-                                    {membershipData.map((comm) => (
-                                        <div key={comm.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
-                                            <div>
-                                                <div className="font-medium text-sm">{comm.name}</div>
-                                                <div className="text-[10px] text-muted-foreground">
-                                                    Attended {comm.attendanceCount} meeting{comm.attendanceCount > 1 ? 's' : ''}
+                                    {membershipData.map((group: any) => (
+                                        <div key={group.id} className="p-3 rounded-lg border bg-muted/30">
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <div className="font-medium text-sm">{group.name}</div>
+                                                <div className="text-[10px] text-muted-foreground bg-background rounded px-1.5 py-0.5 border shadow-sm">
+                                                    Last: {new Date(group.lastAttended).toLocaleDateString()}
                                                 </div>
                                             </div>
-                                            <div className="text-[10px] text-muted-foreground bg-background rounded px-1.5 py-0.5 border shadow-sm">
-                                                Last: {new Date(comm.lastAttended).toLocaleDateString()}
+                                            <div className="flex gap-2 flex-wrap text-[10px]">
+                                                {group.presentCount > 0 && (
+                                                    <span className="px-1.5 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                                        {group.presentCount} present
+                                                    </span>
+                                                )}
+                                                {group.lateCount > 0 && (
+                                                    <span className="px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                                                        {group.lateCount} late
+                                                    </span>
+                                                )}
+                                                {group.excusedCount > 0 && (
+                                                    <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                                        {group.excusedCount} excused
+                                                    </span>
+                                                )}
+                                                {group.absentCount > 0 && (
+                                                    <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                                                        {group.absentCount} absent
+                                                    </span>
+                                                )}
+                                                <span className="px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
+                                                    {group.totalMeetings} total
+                                                </span>
                                             </div>
                                         </div>
                                     ))}

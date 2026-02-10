@@ -18,10 +18,12 @@ export async function GET(
             include: {
                 attendance: {
                     include: {
-                        speaker: true
-                    }
-                }
-            }
+                        speaker: {
+                            include: { groups: true },
+                        },
+                    },
+                },
+            },
         })
 
         if (!meeting) {
@@ -53,45 +55,75 @@ export async function PATCH(
             await prisma.meeting.update({
                 where: { id },
                 data: {
-                    title,
-                    notes
-                }
+                    ...(title !== undefined && { title }),
+                    ...(notes !== undefined && { notes }),
+                },
             })
         }
 
-        // Handle attendance if provided
-        // Expecting attendance: { add: [speakerId], remove: [speakerId] }
+        // Handle attendance changes
         if (attendance) {
-            const { add, remove } = attendance
+            const { add, remove, updateStatus } = attendance
 
+            // Add new attendees (default status PRESENT)
             if (add && Array.isArray(add)) {
-                await Promise.all(add.map((speakerId: string) =>
-                    prisma.meetingAttendance.upsert({
-                        where: {
-                            meetingId_speakerId: {
+                await Promise.all(
+                    add.map((speakerId: string) =>
+                        prisma.meetingAttendance.upsert({
+                            where: {
+                                meetingId_speakerId: {
+                                    meetingId: id,
+                                    speakerId,
+                                },
+                            },
+                            create: {
                                 meetingId: id,
-                                speakerId
-                            }
-                        },
-                        create: {
-                            meetingId: id,
-                            speakerId,
-                            isPresent: true
-                        },
-                        update: {
-                            isPresent: true
-                        }
-                    })
-                ))
+                                speakerId,
+                                status: "PRESENT",
+                            },
+                            update: {
+                                status: "PRESENT",
+                            },
+                        })
+                    )
+                )
             }
 
+            // Remove attendees
             if (remove && Array.isArray(remove)) {
                 await prisma.meetingAttendance.deleteMany({
                     where: {
                         meetingId: id,
-                        speakerId: { in: remove }
-                    }
+                        speakerId: { in: remove },
+                    },
                 })
+            }
+
+            // Update attendance status for specific attendees
+            if (updateStatus && Array.isArray(updateStatus)) {
+                await Promise.all(
+                    updateStatus.map(
+                        (item: {
+                            speakerId: string
+                            status: string
+                            note?: string
+                        }) =>
+                            prisma.meetingAttendance.update({
+                                where: {
+                                    meetingId_speakerId: {
+                                        meetingId: id,
+                                        speakerId: item.speakerId,
+                                    },
+                                },
+                                data: {
+                                    status: item.status as any,
+                                    ...(item.note !== undefined && {
+                                        note: item.note,
+                                    }),
+                                },
+                            })
+                    )
+                )
             }
         }
 
@@ -101,14 +133,15 @@ export async function PATCH(
             include: {
                 attendance: {
                     include: {
-                        speaker: true
-                    }
-                }
-            }
+                        speaker: {
+                            include: { groups: true },
+                        },
+                    },
+                },
+            },
         })
 
         return NextResponse.json(updatedMeeting)
-
     } catch (error) {
         console.error(error)
         return new NextResponse("Internal Server Error", { status: 500 })
@@ -127,7 +160,7 @@ export async function DELETE(
     try {
         const { id } = await params
         await prisma.meeting.delete({
-            where: { id }
+            where: { id },
         })
         return new NextResponse(null, { status: 204 })
     } catch (error) {

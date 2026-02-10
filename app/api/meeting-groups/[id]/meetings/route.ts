@@ -13,17 +13,18 @@ export async function GET(
 
     try {
         const { id } = await params
-        // Fetch meetings for committee, ordered by date descending (most recent first)
         const meetings = await prisma.meeting.findMany({
-            where: { committeeId: id },
-            orderBy: { date: 'desc' },
+            where: { meetingGroupId: id },
+            orderBy: { date: "desc" },
             include: {
                 attendance: {
                     include: {
-                        speaker: true
-                    }
-                }
-            }
+                        speaker: {
+                            include: { groups: true },
+                        },
+                    },
+                },
+            },
         })
         return NextResponse.json(meetings)
     } catch (error) {
@@ -45,33 +46,45 @@ export async function POST(
         const body = await req.json()
         const { title } = body
 
-        const committee = await prisma.committee.findUnique({
-            where: { id }
+        const meetingGroup = await prisma.meetingGroup.findUnique({
+            where: { id },
+            include: {
+                requiredMembers: true,
+            },
         })
 
-        if (!committee) {
-            return new NextResponse("Committee not found", { status: 404 })
+        if (!meetingGroup) {
+            return new NextResponse("Meeting group not found", { status: 404 })
         }
 
-        // Default title format if not provided
-        const defaultTitle = `${committee.name} ${new Date().toLocaleDateString()}`
+        const defaultTitle = `${meetingGroup.name} ${new Date().toLocaleDateString()}`
 
+        // Create the meeting and auto-populate attendance from required members
         const meeting = await prisma.meeting.create({
             data: {
                 title: title || defaultTitle,
-                committeeId: id,
+                meetingGroupId: id,
+                attendance: {
+                    create: meetingGroup.requiredMembers.map((member) => ({
+                        speakerId: member.id,
+                        status: "ABSENT",
+                    })),
+                },
             },
             include: {
                 attendance: {
                     include: {
-                        speaker: true
-                    }
-                }
-            }
+                        speaker: {
+                            include: { groups: true },
+                        },
+                    },
+                },
+            },
         })
 
         return NextResponse.json(meeting)
     } catch (error) {
+        console.error(error)
         return new NextResponse("Internal Server Error", { status: 500 })
     }
 }

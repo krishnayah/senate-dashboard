@@ -9,10 +9,16 @@ export async function GET() {
     }
 
     try {
-        const committees = await prisma.committee.findMany({
-            orderBy: { name: 'asc' }
+        const groups = await prisma.meetingGroup.findMany({
+            orderBy: { name: "asc" },
+            include: {
+                requiredMembers: {
+                    include: { groups: true },
+                    orderBy: { name: "asc" },
+                },
+            },
         })
-        return NextResponse.json(committees)
+        return NextResponse.json(groups)
     } catch (error) {
         return new NextResponse("Internal Server Error", { status: 500 })
     }
@@ -32,11 +38,16 @@ export async function POST(req: Request) {
             return new NextResponse("Name is required", { status: 400 })
         }
 
-        const committee = await prisma.committee.create({
-            data: { name }
+        const group = await prisma.meetingGroup.create({
+            data: { name },
+            include: {
+                requiredMembers: {
+                    include: { groups: true },
+                },
+            },
         })
 
-        return NextResponse.json(committee)
+        return NextResponse.json(group)
     } catch (error) {
         return new NextResponse("Internal Server Error", { status: 500 })
     }

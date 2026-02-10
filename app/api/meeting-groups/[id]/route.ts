@@ -20,12 +20,17 @@ export async function PATCH(
             return new NextResponse("Name is required", { status: 400 })
         }
 
-        const committee = await prisma.committee.update({
+        const group = await prisma.meetingGroup.update({
             where: { id },
-            data: { name }
+            data: { name },
+            include: {
+                requiredMembers: {
+                    include: { groups: true },
+                },
+            },
         })
 
-        return NextResponse.json(committee)
+        return NextResponse.json(group)
     } catch (error) {
         return new NextResponse("Internal Server Error", { status: 500 })
     }
@@ -42,8 +47,8 @@ export async function DELETE(
 
     try {
         const { id } = await params
-        await prisma.committee.delete({
-            where: { id }
+        await prisma.meetingGroup.delete({
+            where: { id },
         })
         return new NextResponse(null, { status: 204 })
     } catch (error) {

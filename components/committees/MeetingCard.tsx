@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Meeting, Speaker } from "@/types"
+import { Meeting, Speaker, AttendanceStatus } from "@/types"
 import { AttendanceList } from "./AttendanceList"
 import { MeetingNotes } from "./MeetingNotes"
 
@@ -20,7 +20,15 @@ export function MeetingCard({ meeting, allSpeakers, isExpanded, onToggleExpand, 
     const [title, setTitle] = useState(meeting.title)
     const [saving, setSaving] = useState(false)
 
-    const handleUpdate = async (data: Partial<{ title: string, notes: string, attendance: { add?: string[], remove?: string[] } }>) => {
+    const handleUpdate = async (data: Partial<{
+        title: string
+        notes: string
+        attendance: {
+            add?: string[]
+            remove?: string[]
+            updateStatus?: { speakerId: string; status: AttendanceStatus; note?: string }[]
+        }
+    }>) => {
         setSaving(true)
         try {
             const res = await fetch(`/api/meetings/${meeting.id}`, {
@@ -54,15 +62,37 @@ export function MeetingCard({ meeting, allSpeakers, isExpanded, onToggleExpand, 
         handleUpdate({ attendance: { remove: [speakerId] } })
     }
 
+    const handleUpdateStatus = (speakerId: string, status: AttendanceStatus, note?: string) => {
+        handleUpdate({
+            attendance: {
+                updateStatus: [{ speakerId, status, ...(note !== undefined && { note }) }]
+            }
+        })
+    }
+
     const handleDelete = () => {
         if (confirm("Are you sure you want to delete this meeting? This cannot be undone.")) {
             onDelete(meeting.id)
         }
     }
 
+    // Count statuses for summary
+    const attendance = meeting.attendance || []
+    const presentCount = attendance.filter(a => a.status === "PRESENT").length
+    const lateCount = attendance.filter(a => a.status === "LATE").length
+    const absentCount = attendance.filter(a => a.status === "ABSENT").length
+    const excusedCount = attendance.filter(a => a.status === "EXCUSED").length
+
+    const statusParts = []
+    if (presentCount > 0) statusParts.push(`${presentCount} present`)
+    if (lateCount > 0) statusParts.push(`${lateCount} late`)
+    if (excusedCount > 0) statusParts.push(`${excusedCount} excused`)
+    if (absentCount > 0) statusParts.push(`${absentCount} absent`)
+    const statusSummary = statusParts.length > 0 ? statusParts.join(", ") : `${attendance.length} tracked`
+
     return (
         <div className="border rounded-lg bg-card text-card-foreground shadow-sm mb-4 overflow-hidden">
-            {/* Header / Summary */}
+            {/* Header */}
             <div
                 className="flex items-center justify-between p-4 bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={onToggleExpand}
@@ -70,7 +100,7 @@ export function MeetingCard({ meeting, allSpeakers, isExpanded, onToggleExpand, 
                 <div className="flex flex-col">
                     <span className="font-semibold text-lg">{meeting.title}</span>
                     <span className="text-xs text-muted-foreground">
-                        {new Date(meeting.date).toLocaleDateString()} • {(meeting.attendance || []).length} Attendees
+                        {new Date(meeting.date).toLocaleDateString()} &bull; {statusSummary}
                     </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -86,7 +116,6 @@ export function MeetingCard({ meeting, allSpeakers, isExpanded, onToggleExpand, 
             {/* Expanded Content */}
             {isExpanded && (
                 <div className="p-4 border-t space-y-6">
-
                     {/* Title Edit */}
                     <div className="space-y-1">
                         <label className="text-sm font-medium leading-none">Meeting Title</label>
@@ -95,41 +124,32 @@ export function MeetingCard({ meeting, allSpeakers, isExpanded, onToggleExpand, 
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             onBlur={handleTitleBlur}
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         />
                     </div>
 
                     {/* Content Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                        {/* Attendance Column */}
                         <AttendanceList
                             attendance={meeting.attendance}
                             allSpeakers={allSpeakers}
                             onAddAttendee={handleAddAttendee}
                             onRemoveAttendee={handleRemoveAttendee}
+                            onUpdateStatus={handleUpdateStatus}
                             onSpeakerCreated={onSpeakerCreated}
                         />
-
-                        {/* Notes Column */}
                         <MeetingNotes
                             initialNotes={meeting.notes}
                             onSave={(newNotes) => handleUpdate({ notes: newNotes })}
                         />
-
                     </div>
 
                     {/* Footer Actions */}
                     <div className="flex justify-end pt-4 border-t">
-                        <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={handleDelete}
-                        >
+                        <Button variant="destructive" size="sm" onClick={handleDelete}>
                             Delete Meeting
                         </Button>
                     </div>
-
                 </div>
             )}
         </div>

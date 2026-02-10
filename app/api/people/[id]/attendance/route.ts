@@ -12,49 +12,69 @@ export async function GET(
     try {
         const { id } = await params
 
-        // Find all meetings this person attended
         const attendance = await prisma.meetingAttendance.findMany({
             where: {
                 speakerId: id,
-                isPresent: true
             },
             include: {
                 meeting: {
                     include: {
-                        committee: true
-                    }
-                }
+                        meetingGroup: true,
+                    },
+                },
             },
             orderBy: {
                 meeting: {
-                    date: 'desc'
-                }
-            }
+                    date: "desc",
+                },
+            },
         })
 
-        // Group by committee and get the latest attendance info
-        const committeeMap = new Map()
+        // Group by meeting group
+        const groupMap = new Map<
+            string,
+            {
+                id: string
+                name: string
+                lastAttended: Date
+                presentCount: number
+                lateCount: number
+                excusedCount: number
+                absentCount: number
+                totalMeetings: number
+            }
+        >()
 
-        attendance.forEach(record => {
-            const committee = record.meeting.committee
-            if (!committeeMap.has(committee.id)) {
-                committeeMap.set(committee.id, {
-                    id: committee.id,
-                    name: committee.name,
+        attendance.forEach((record) => {
+            const mg = record.meeting.meetingGroup
+            if (!mg) return
+
+            if (!groupMap.has(mg.id)) {
+                groupMap.set(mg.id, {
+                    id: mg.id,
+                    name: mg.name,
                     lastAttended: record.meeting.date,
-                    attendanceCount: 1
+                    presentCount: 0,
+                    lateCount: 0,
+                    excusedCount: 0,
+                    absentCount: 0,
+                    totalMeetings: 0,
                 })
-            } else {
-                const existing = committeeMap.get(committee.id)
-                existing.attendanceCount += 1
             }
+
+            const entry = groupMap.get(mg.id)!
+            entry.totalMeetings += 1
+            if (record.status === "PRESENT") entry.presentCount += 1
+            else if (record.status === "LATE") entry.lateCount += 1
+            else if (record.status === "EXCUSED") entry.excusedCount += 1
+            else if (record.status === "ABSENT") entry.absentCount += 1
         })
 
-        const result = Array.from(committeeMap.values())
+        const result = Array.from(groupMap.values())
 
         return NextResponse.json(result)
     } catch (error) {
-        console.error("Failed to fetch committee attendance:", error)
+        console.error("Failed to fetch attendance:", error)
         return new NextResponse("Internal Server Error", { status: 500 })
     }
 }

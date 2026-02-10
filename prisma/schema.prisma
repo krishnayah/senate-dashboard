@@ -75,39 +75,50 @@ model Speaker {
   groups     Group[]
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
-  
+
   // Relations
-  meetingAttendance MeetingAttendance[]
+  meetingAttendance  MeetingAttendance[]
+  requiredInGroups   MeetingGroup[]       @relation("RequiredMembers")
 }
 
-model Committee {
-  id        String    @id @default(cuid())
-  name      String
-  meetings  Meeting[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+model MeetingGroup {
+  id              String    @id @default(cuid())
+  name            String
+  meetings        Meeting[]
+  requiredMembers Speaker[] @relation("RequiredMembers")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model Meeting {
-  id          String              @id @default(cuid())
-  title       String
-  date        DateTime            @default(now())
-  notes       String?
-  committeeId String
-  committee   Committee           @relation(fields: [committeeId], references: [id], onDelete: Cascade)
-  attendance  MeetingAttendance[]
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  id             String              @id @default(cuid())
+  title          String
+  date           DateTime            @default(now())
+  notes          String?
+  meetingGroupId String?
+  meetingGroup   MeetingGroup?       @relation(fields: [meetingGroupId], references: [id], onDelete: Cascade)
+  attendance     MeetingAttendance[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+}
+
+enum AttendanceStatus {
+  PRESENT
+  LATE
+  EXCUSED
+  ABSENT
+  OTHER
 }
 
 model MeetingAttendance {
-  id        String   @id @default(cuid())
+  id        String           @id @default(cuid())
   meetingId String
   speakerId String
-  meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
-  speaker   Speaker  @relation(fields: [speakerId], references: [id], onDelete: Cascade)
-  isPresent Boolean  @default(true)
-  createdAt DateTime @default(now())
+  meeting   Meeting          @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  speaker   Speaker          @relation(fields: [speakerId], references: [id], onDelete: Cascade)
+  status    AttendanceStatus @default(PRESENT)
+  note      String?
+  createdAt DateTime         @default(now())
 
   @@unique([meetingId, speakerId])
 }

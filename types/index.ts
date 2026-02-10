@@ -15,17 +15,21 @@ export interface Speaker {
     updatedAt?: Date | string
 }
 
+export type AttendanceStatus = "PRESENT" | "LATE" | "EXCUSED" | "ABSENT" | "OTHER"
+
 export interface Attendance {
     id?: string
     meetingId?: string
     speakerId: string
-    isPresent: boolean
+    status: AttendanceStatus
+    note?: string | null
     speaker: Speaker
 }
 
-export interface Committee {
+export interface MeetingGroup {
     id: string
     name: string
+    requiredMembers?: Speaker[]
     createdAt?: Date | string
     updatedAt?: Date | string
 }
@@ -36,5 +40,5 @@ export interface Meeting {
     date: string | Date
     notes: string | null
     attendance: Attendance[]
-    committeeId?: string
+    meetingGroupId?: string
 }

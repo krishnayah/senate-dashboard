@@ -31,7 +31,7 @@ export function Navbar() {
                             href="/committees"
                             className="text-muted-foreground transition-colors hover:text-foreground"
                         >
-                            Committees
+                            Meetings
                         </Link>
                         <Link
                             href="/people"
