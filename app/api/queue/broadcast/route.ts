@@ -1,14 +1,23 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { createBroadcast, removeBroadcast } from "@/lib/broadcast-store"
+import { sendDiscordBroadcastNotification } from "@/lib/discord"
 
-export async function POST() {
+export async function POST(request: Request) {
     const session = await auth()
     if (!session) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const token = createBroadcast()
+
+    // Build the broadcast URL from the request origin
+    const origin = request.headers.get("origin") || request.headers.get("referer")?.replace(/\/[^/]*$/, "") || ""
+    const broadcastUrl = `${origin}/queue/live/${token}`
+
+    // Fire-and-forget Discord notification
+    sendDiscordBroadcastNotification(broadcastUrl)
+
     return NextResponse.json({ token })
 }
 
