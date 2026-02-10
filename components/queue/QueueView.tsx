@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { QueueCard, LocalQueueItem } from "./QueueCard"
+import { BroadcastButton } from "./BroadcastButton"
 import { v4 as uuidv4 } from "uuid"
 
 interface Speaker {
@@ -314,8 +315,9 @@ export function QueueView({ onQueueChange, onAddSpeakerRef, onRefetchSpeakers }:
                 />
             )}
 
-            {/* Reset button */}
-            <div className="flex justify-center pt-4">
+            {/* Broadcast + Reset */}
+            <div className="flex items-start justify-between pt-4 gap-4">
+                <BroadcastButton queues={queues} />
                 <Button variant="outline" size="sm" onClick={handleCreateMainQueue}>
                     Reset All Queues
                 </Button>

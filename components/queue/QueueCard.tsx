@@ -24,6 +24,7 @@ interface QueueCardProps {
     items: LocalQueueItem[]
     isCollapsed: boolean
     isCurrentQueue: boolean
+    readOnly?: boolean
     onOpenSubqueue: (name: string) => void
     onCloseQueue: () => void
     onRemoveSpeaker: (itemId: string) => void
@@ -36,6 +37,7 @@ export function QueueCard({
     items,
     isCollapsed,
     isCurrentQueue,
+    readOnly = false,
     onOpenSubqueue,
     onCloseQueue,
     onRemoveSpeaker,
@@ -72,26 +74,28 @@ export function QueueCard({
             <div className="bg-gradient-to-r from-rose-600 to-rose-700 px-6 py-4">
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-bold text-white">{name}</h2>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => setShowSubqueueInput(!showSubqueueInput)}
-                            className="bg-white/20 hover:bg-white/30 text-white border-0"
-                        >
-                            Open Subqueue
-                        </Button>
-                        {isCurrentQueue && (
+                    {!readOnly && (
+                        <div className="flex items-center gap-2">
                             <Button
                                 size="sm"
                                 variant="secondary"
-                                onClick={onCloseQueue}
+                                onClick={() => setShowSubqueueInput(!showSubqueueInput)}
                                 className="bg-white/20 hover:bg-white/30 text-white border-0"
                             >
-                                Close Queue
+                                Open Subqueue
                             </Button>
-                        )}
-                    </div>
+                            {isCurrentQueue && (
+                                <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    onClick={onCloseQueue}
+                                    className="bg-white/20 hover:bg-white/30 text-white border-0"
+                                >
+                                    Close Queue
+                                </Button>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {showSubqueueInput && (
@@ -117,7 +121,7 @@ export function QueueCard({
 
             <div className="p-6">
                 {/* Next Speaker Button */}
-                {items.length > 0 && (
+                {!readOnly && items.length > 0 && (
                     <div className="mb-4">
                         <Button
                             onClick={onNextSpeaker}
@@ -158,14 +162,16 @@ export function QueueCard({
                                         </span>
                                     </div>
                                 </div>
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => onRemoveSpeaker(item.id)}
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
-                                >
-                                    Remove
-                                </Button>
+                                {!readOnly && (
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => onRemoveSpeaker(item.id)}
+                                        className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    >
+                                        Remove
+                                    </Button>
+                                )}
                             </div>
                         ))
                     )}
