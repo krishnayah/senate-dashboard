@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import {
     updateBroadcast,
-    subscribeToBroadcast,
-    unsubscribeFromBroadcast,
+    getBroadcastState,
     hasBroadcast,
+    broadcastChannel,
 } from "@/lib/broadcast-store"
+import { getRedisPubSubClient } from "@/lib/redis"
 
 export async function PUT(
     request: NextRequest,
@@ -19,7 +20,7 @@ export async function PUT(
     const { token } = await params
     const { queues } = await request.json()
 
-    const updated = updateBroadcast(token, queues)
+    const updated = await updateBroadcast(token, queues)
     if (!updated) {
         return NextResponse.json({ error: "Broadcast not found" }, { status: 404 })
     }
@@ -33,24 +34,49 @@ export async function GET(
 ) {
     const { token } = await params
 
-    if (!hasBroadcast(token)) {
+    const exists = await hasBroadcast(token)
+    if (!exists) {
         return NextResponse.json({ error: "Broadcast not found" }, { status: 404 })
     }
 
+    const encoder = new TextEncoder()
+    const subscriber = getRedisPubSubClient()
+    const channel = broadcastChannel(token)
+
     const stream = new ReadableStream({
-        start(controller) {
-            const encoder = new TextEncoder()
-
-            const currentState = subscribeToBroadcast(token, controller)
-
-            // Send initial state
+        async start(controller) {
+            // Send initial state from Redis
+            const currentState = await getBroadcastState(token)
             if (currentState) {
                 controller.enqueue(
                     encoder.encode(`data: ${JSON.stringify(currentState)}\n\n`)
                 )
             }
 
-            // Send keepalive every 30s to prevent connection timeout
+            // Subscribe to Redis pub/sub channel for live updates
+            await subscriber.subscribe(channel)
+
+            subscriber.on("message", (_ch: string, message: string) => {
+                try {
+                    if (message === "__CLOSED__") {
+                        controller.enqueue(
+                            encoder.encode(`event: closed\ndata: {}\n\n`)
+                        )
+                        controller.close()
+                        subscriber.unsubscribe(channel)
+                        subscriber.quit()
+                        return
+                    }
+                    controller.enqueue(
+                        encoder.encode(`data: ${message}\n\n`)
+                    )
+                } catch {
+                    subscriber.unsubscribe(channel)
+                    subscriber.quit()
+                }
+            })
+
+            // Keepalive every 30s
             const keepalive = setInterval(() => {
                 try {
                     controller.enqueue(encoder.encode(`: keepalive\n\n`))
@@ -62,7 +88,8 @@ export async function GET(
             // Cleanup when client disconnects
             _request.signal.addEventListener("abort", () => {
                 clearInterval(keepalive)
-                unsubscribeFromBroadcast(token, controller)
+                subscriber.unsubscribe(channel)
+                subscriber.quit()
             })
         },
     })

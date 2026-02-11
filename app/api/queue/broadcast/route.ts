@@ -9,7 +9,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const token = createBroadcast()
+    const token = await createBroadcast()
 
     // Build the broadcast URL from the request origin
     const origin = request.headers.get("origin") || request.headers.get("referer")?.replace(/\/[^/]*$/, "") || ""
@@ -28,7 +28,7 @@ export async function DELETE(request: Request) {
     }
 
     const { token } = await request.json()
-    const removed = removeBroadcast(token)
+    const removed = await removeBroadcast(token)
 
     if (!removed) {
         return NextResponse.json({ error: "Broadcast not found" }, { status: 404 })

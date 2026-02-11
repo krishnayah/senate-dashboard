@@ -43,6 +43,24 @@ export function BroadcastButton({ queues }: BroadcastButtonProps) {
         }
     }, [queues, isBroadcasting, pushState])
 
+    // Cleanup broadcast on tab close / navigate away
+    useEffect(() => {
+        const cleanup = () => {
+            if (tokenRef.current) {
+                navigator.sendBeacon(
+                    "/api/queue/broadcast/cleanup",
+                    JSON.stringify({ token: tokenRef.current })
+                )
+            }
+        }
+
+        window.addEventListener("beforeunload", cleanup)
+        return () => {
+            window.removeEventListener("beforeunload", cleanup)
+            cleanup()
+        }
+    }, [])
+
     const handleStartBroadcast = async () => {
         setError(null)
         try {

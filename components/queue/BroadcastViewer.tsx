@@ -44,6 +44,13 @@ export function BroadcastViewer({ token }: BroadcastViewerProps) {
             }
         }
 
+        // Handle broadcast closed event from server
+        es.addEventListener("closed", () => {
+            es.close()
+            eventSourceRef.current = null
+            setStatus("disconnected")
+        })
+
         es.onerror = () => {
             es.close()
             eventSourceRef.current = null
