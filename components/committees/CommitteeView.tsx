@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { Download } from "lucide-react"
 import { MeetingCard } from "./MeetingCard"
 import { RequiredMembersPanel } from "./RequiredMembersPanel"
+import { exportAttendanceXlsx } from "@/lib/export-attendance"
 import { Speaker, MeetingGroup, Meeting } from "@/types"
 
 export function CommitteeView() {
@@ -163,6 +165,12 @@ export function CommitteeView() {
         setMeetingGroups(prev => prev.map(g => g.id === updatedGroup.id ? updatedGroup : g))
     }
 
+    const handleExportAttendance = async () => {
+        if (meetings.length === 0) return
+        const groupName = selectedGroup?.name || "attendance"
+        await exportAttendanceXlsx(meetings, groupName)
+    }
+
     if (loading) {
         return <div className="text-center py-8">Loading...</div>
     }
@@ -223,9 +231,20 @@ export function CommitteeView() {
 
                 <div className="flex gap-2">
                     {selectedGroupId && (
-                        <Button onClick={handleCreateMeeting}>
-                            + New Meeting
-                        </Button>
+                        <>
+                            <Button
+                                variant="outline"
+                                onClick={handleExportAttendance}
+                                disabled={meetings.length === 0}
+                                title="Export attendance to spreadsheet"
+                            >
+                                <Download className="size-4 mr-1.5" />
+                                Export
+                            </Button>
+                            <Button onClick={handleCreateMeeting}>
+                                + New Meeting
+                            </Button>
+                        </>
                     )}
 
                     <div className="relative">
