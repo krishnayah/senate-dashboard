@@ -2,19 +2,14 @@ const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/147090900458563590
 
 export async function sendDiscordBroadcastNotification(broadcastUrl: string) {
 
-    const now = new Date()
-    const time = now.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-    })
+    const unixTimestamp = Math.floor(Date.now() / 1000)
 
     try {
         await fetch(DISCORD_WEBHOOK_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                content: `**Queue broadcast started at ${time}**\n${broadcastUrl}`,
+                content: `**Queue broadcast started at <t:${unixTimestamp}:t>**\n${broadcastUrl}`,
             }),
         })
     } catch (error) {
