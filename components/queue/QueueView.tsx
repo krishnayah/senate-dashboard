@@ -267,46 +267,32 @@ export function QueueView({ onQueueChange, onAddSpeakerRef, onRefetchSpeakers }:
     }
 
     const handleNextSpeaker = async (queueId: string) => {
-        let speakerToIncrement: Speaker | null = null
+        const queue = queues.find(q => q.id === queueId)
+        const speakerToIncrement = queue?.items[0]?.speaker ?? null
+        if (!speakerToIncrement) return
 
         setQueues(prev => prev.map(q => {
-            if (q.id === queueId && q.items.length > 0) {
-                const items = [...q.items]
-                const removed = items.shift() // Remove first
-
-                if (removed) {
-                    speakerToIncrement = removed.speaker
-                    const speakerId = removed.speaker.id
-
-                    const newCounts = { ...q.speakerCounts }
-                    newCounts[speakerId] = (newCounts[speakerId] || 0) + 1
-
-                    const nextCurrentStartedAt =
-                        q.type === "discussion"
-                            ? items.length > 0 ? Date.now() : null
-                            : q.currentSpeakerStartedAt ?? null
-
-                    return {
-                        ...q,
-                        items,
-                        speakerCounts: newCounts,
-                        currentSpeakerStartedAt: nextCurrentStartedAt,
-                    }
-                }
-                return { ...q, items }
-            }
-            return q
+            if (q.id !== queueId || q.items.length === 0) return q
+            const items = q.items.slice(1)
+            const newCounts = { ...q.speakerCounts }
+            newCounts[speakerToIncrement.id] = (newCounts[speakerToIncrement.id] || 0) + 1
+            const nextCurrentStartedAt =
+                q.type === "discussion"
+                    ? items.length > 0 ? Date.now() : null
+                    : q.currentSpeakerStartedAt ?? null
+            return { ...q, items, speakerCounts: newCounts, currentSpeakerStartedAt: nextCurrentStartedAt }
         }))
 
-        if (speakerToIncrement) {
-            try {
-                await fetch(`/api/speakers/${(speakerToIncrement as Speaker).id}/increment`, {
-                    method: "POST"
-                })
-                onRefetchSpeakers()
-            } catch (e) {
-                console.error("Failed to increment speak count", e)
+        try {
+            const res = await fetch(`/api/speakers/${speakerToIncrement.id}/increment`, {
+                method: "POST"
+            })
+            if (!res.ok) {
+                console.error("Increment returned", res.status, await res.text())
             }
+            onRefetchSpeakers()
+        } catch (e) {
+            console.error("Failed to increment speak count", e)
         }
     }
 
