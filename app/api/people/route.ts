@@ -32,7 +32,6 @@ export async function POST(req: NextRequest) {
         const person = await prisma.speaker.create({
             data: {
                 name,
-                type: "guest", // Default
                 groups: {
                     connect: connectQuery
                 }

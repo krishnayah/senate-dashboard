@@ -28,12 +28,6 @@ export function Navbar() {
                             Queue
                         </Link>
                         <Link
-                            href="/committees"
-                            className="text-muted-foreground transition-colors hover:text-foreground"
-                        >
-                            Meetings
-                        </Link>
-                        <Link
                             href="/people"
                             className="text-muted-foreground transition-colors hover:text-foreground"
                         >

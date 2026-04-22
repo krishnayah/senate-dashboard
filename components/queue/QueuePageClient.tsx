@@ -3,11 +3,11 @@
 import { useState, useCallback, useRef } from "react"
 import { QueueView } from "./QueueView"
 import { SpeakerPanel } from "./SpeakerPanel"
+import { SpeakLeaderboard } from "./SpeakLeaderboard"
 
 interface Speaker {
     id: string
     name: string
-    type: string
     speakCount: number
 }
 
@@ -35,21 +35,25 @@ export function QueuePageClient() {
     }, [])
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-                <QueueView
-                    onQueueChange={handleQueueChange}
-                    onAddSpeakerRef={(fn) => { addSpeakerToQueueRef.current = fn }}
-                    onRefetchSpeakers={handleRefetchSpeakers}
-                />
-            </div>
-            <div className="lg:col-span-1">
-                <SpeakerPanel
-                    currentQueueId={currentQueueId}
-                    onSpeakerAdded={handleSpeakerAdded}
-                    onAddToQueue={handleAddToQueue}
-                    key={refreshSpeakersKey}
-                />
+        <div className="space-y-6">
+            <SpeakLeaderboard key={`leaderboard-${refreshSpeakersKey}`} />
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                    <QueueView
+                        onQueueChange={handleQueueChange}
+                        onAddSpeakerRef={(fn) => { addSpeakerToQueueRef.current = fn }}
+                        onRefetchSpeakers={handleRefetchSpeakers}
+                    />
+                </div>
+                <div className="lg:col-span-1">
+                    <SpeakerPanel
+                        currentQueueId={currentQueueId}
+                        onSpeakerAdded={handleSpeakerAdded}
+                        onAddToQueue={handleAddToQueue}
+                        key={refreshSpeakersKey}
+                    />
+                </div>
             </div>
         </div>
     )

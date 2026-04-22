@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
-import { Group, Speaker } from "@/types"
+import { Speaker } from "@/types"
 import { useSpeakers } from "@/hooks/useSpeakers"
 import { useGroups } from "@/hooks/useGroups"
 
@@ -13,7 +13,7 @@ interface SpeakerPanelProps {
 }
 
 export function SpeakerPanel({ currentQueueId, onSpeakerAdded, onAddToQueue }: SpeakerPanelProps) {
-    const { speakers, loading: speakersLoading, createSpeaker, updateSpeaker, deleteSpeaker, fetchSpeakers } = useSpeakers()
+    const { speakers, loading: speakersLoading, createSpeaker, updateSpeaker, deleteSpeaker } = useSpeakers()
     const { groups, loading: groupsLoading } = useGroups()
 
     const [newName, setNewName] = useState("")
@@ -26,24 +26,20 @@ export function SpeakerPanel({ currentQueueId, onSpeakerAdded, onAddToQueue }: S
 
     const loading = speakersLoading || groupsLoading
 
-    // Initialize default group
-    useMemo(() => {
+    useEffect(() => {
         if (groups.length > 0 && (selectedGroupId === "guest" || !selectedGroupId)) {
             const guestGroup = groups.find(g => g.name.toLowerCase() === "guest")
             if (guestGroup) setSelectedGroupId(guestGroup.id)
         }
-    }, [groups])
+    }, [groups, selectedGroupId])
 
-    // Load/Save collapse state
-    useMemo(() => {
-        if (typeof window !== "undefined") {
-            const saved = localStorage.getItem("speaker-panel-collapse")
-            if (saved) {
-                try {
-                    setCollapsedSections(JSON.parse(saved))
-                } catch (e) {
-                    console.error("Failed to parse collapse state", e)
-                }
+    useEffect(() => {
+        const saved = localStorage.getItem("speaker-panel-collapse")
+        if (saved) {
+            try {
+                setCollapsedSections(JSON.parse(saved))
+            } catch (e) {
+                console.error("Failed to parse collapse state", e)
             }
         }
     }, [])

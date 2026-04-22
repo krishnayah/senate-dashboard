@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Speaker, Group } from "@/types"
+import { Speaker } from "@/types"
 import { useToast } from "@/components/ui/use-toast"
 
 export function useSpeakers() {

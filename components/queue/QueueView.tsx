@@ -2,16 +2,18 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import { QueueCard, LocalQueueItem } from "./QueueCard"
+import { QueueCard, LocalQueueItem, DiscussionInfo } from "./QueueCard"
 import { BroadcastButton } from "./BroadcastButton"
 import { v4 as uuidv4 } from "uuid"
 
 interface Speaker {
     id: string
     name: string
-    type: string
     speakCount: number
 }
+
+const DISCUSSION_TOTAL_SEC = 45 * 60
+const DISCUSSION_PER_SPEAKER_SEC = 5 * 60
 
 // Client-side queue structure
 interface LocalQueue {
@@ -23,12 +25,27 @@ interface LocalQueue {
     createdAt: number
     // Map of speakerId -> count for this specific queue
     speakerCounts: Record<string, number>
+    type?: "normal" | "discussion"
+    discussionStartedAt?: number
+    currentSpeakerStartedAt?: number | null
+    totalDurationSec?: number
+    perSpeakerDurationSec?: number
 }
 
 interface QueueViewProps {
     onQueueChange?: (currentQueueId: string | null) => void
     onAddSpeakerRef: (callback: (speaker: Speaker) => void) => void
     onRefetchSpeakers: () => void
+}
+
+function getDiscussionInfo(q: LocalQueue): DiscussionInfo | null {
+    if (q.type !== "discussion" || !q.discussionStartedAt) return null
+    return {
+        discussionStartedAt: q.discussionStartedAt,
+        currentSpeakerStartedAt: q.currentSpeakerStartedAt ?? null,
+        totalDurationSec: q.totalDurationSec ?? DISCUSSION_TOTAL_SEC,
+        perSpeakerDurationSec: q.perSpeakerDurationSec ?? DISCUSSION_PER_SPEAKER_SEC,
+    }
 }
 
 export function QueueView({ onQueueChange, onAddSpeakerRef, onRefetchSpeakers }: QueueViewProps) {
@@ -64,7 +81,8 @@ export function QueueView({ onQueueChange, onAddSpeakerRef, onRefetchSpeakers }:
                 parentId: null,
                 isActive: true,
                 createdAt: Date.now(),
-                speakerCounts: {}
+                speakerCounts: {},
+                type: "normal"
             }
             setQueues([mainQueue])
         }
@@ -113,7 +131,8 @@ export function QueueView({ onQueueChange, onAddSpeakerRef, onRefetchSpeakers }:
                 parentId: null,
                 isActive: true,
                 createdAt: Date.now(),
-                speakerCounts: {}
+                speakerCounts: {},
+                type: "normal"
             }
             setQueues([mainQueue])
         }
@@ -127,9 +146,29 @@ export function QueueView({ onQueueChange, onAddSpeakerRef, onRefetchSpeakers }:
             parentId,
             isActive: true,
             createdAt: Date.now(),
-            speakerCounts: {}
+            speakerCounts: {},
+            type: "normal"
         }
         setQueues(prev => [...prev, subqueue])
+    }
+
+    const handleOpenDiscussionQueue = (parentId: string) => {
+        const now = Date.now()
+        const discussionQueue: LocalQueue = {
+            id: uuidv4(),
+            name: "Discussion Queue",
+            items: [],
+            parentId,
+            isActive: true,
+            createdAt: now,
+            speakerCounts: {},
+            type: "discussion",
+            discussionStartedAt: now,
+            currentSpeakerStartedAt: null,
+            totalDurationSec: DISCUSSION_TOTAL_SEC,
+            perSpeakerDurationSec: DISCUSSION_PER_SPEAKER_SEC,
+        }
+        setQueues(prev => [...prev, discussionQueue])
     }
 
     const handleCloseQueue = (queueId: string) => {
@@ -167,14 +206,6 @@ export function QueueView({ onQueueChange, onAddSpeakerRef, onRefetchSpeakers }:
                     let insertIndex = items.length
 
                     for (let i = 0; i < items.length; i++) {
-                        // We need to look up speak count for the existing item in the queue map
-                        // But wait, the item.speaker object might have stale data or global data
-                        // The item.speaker object comes from the DB, so it has global count.
-                        // We must use the local map for comparison.
-
-                        // However, QueueItem currently stores a full Speaker object.
-                        // Ideally we should update the logic to trust the local map for priority.
-
                         const itemSpeakerId = items[i].speaker.id
                         const itemLocalCount = q.speakerCounts[itemSpeakerId] || 0
 
@@ -184,10 +215,6 @@ export function QueueView({ onQueueChange, onAddSpeakerRef, onRefetchSpeakers }:
                         }
                     }
 
-                    // Create a modified speaker object that reflects the LOCAL count for display purposes
-                    // (Optional: if we want the UI to show queue-specific count, we can override it here)
-                    // The user said "times spoken feature should be PER QUEUE".
-                    // So we should probably override the speakCount in the stored item for display.
                     const displaySpeaker = {
                         ...speaker,
                         speakCount: localSpeakCount
@@ -202,13 +229,20 @@ export function QueueView({ onQueueChange, onAddSpeakerRef, onRefetchSpeakers }:
 
                     items.splice(insertIndex, 0, newItem)
 
-                    // Re-index positions
                     const reindexed = items.map((item, idx) => ({
                         ...item,
                         position: idx
                     }))
 
-                    return { ...q, items: reindexed }
+                    // If this is a discussion queue and the first speaker just
+                    // appeared at position 0, start the per-speaker timer.
+                    const wasEmpty = q.items.length === 0
+                    const nextCurrentStartedAt =
+                        q.type === "discussion" && wasEmpty
+                            ? Date.now()
+                            : q.currentSpeakerStartedAt ?? null
+
+                    return { ...q, items: reindexed, currentSpeakerStartedAt: nextCurrentStartedAt }
                 }
                 return q
             })
@@ -218,8 +252,15 @@ export function QueueView({ onQueueChange, onAddSpeakerRef, onRefetchSpeakers }:
     const handleRemoveSpeaker = (queueId: string, itemId: string) => {
         setQueues(prev => prev.map(q => {
             if (q.id === queueId) {
+                const wasCurrent = q.items[0]?.id === itemId
                 const items = q.items.filter(i => i.id !== itemId)
-                return { ...q, items }
+
+                let nextCurrentStartedAt = q.currentSpeakerStartedAt ?? null
+                if (q.type === "discussion" && wasCurrent) {
+                    nextCurrentStartedAt = items.length > 0 ? Date.now() : null
+                }
+
+                return { ...q, items, currentSpeakerStartedAt: nextCurrentStartedAt }
             }
             return q
         }))
@@ -237,21 +278,26 @@ export function QueueView({ onQueueChange, onAddSpeakerRef, onRefetchSpeakers }:
                     speakerToIncrement = removed.speaker
                     const speakerId = removed.speaker.id
 
-                    // Increment count for this queue
                     const newCounts = { ...q.speakerCounts }
                     newCounts[speakerId] = (newCounts[speakerId] || 0) + 1
 
-                    return { ...q, items, speakerCounts: newCounts }
+                    const nextCurrentStartedAt =
+                        q.type === "discussion"
+                            ? items.length > 0 ? Date.now() : null
+                            : q.currentSpeakerStartedAt ?? null
+
+                    return {
+                        ...q,
+                        items,
+                        speakerCounts: newCounts,
+                        currentSpeakerStartedAt: nextCurrentStartedAt,
+                    }
                 }
                 return { ...q, items }
             }
             return q
         }))
 
-        // Call API to increment GLOBAL speak count as well (if desired)
-        // User said "Speakers should still be stored globally".
-        // Usually, global stats are useful, but "times spoken feature" (for priority) is per queue.
-        // We will uphold the API call so the database has a record of total speaks.
         if (speakerToIncrement) {
             try {
                 await fetch(`/api/speakers/${(speakerToIncrement as Speaker).id}/increment`, {
@@ -292,6 +338,7 @@ export function QueueView({ onQueueChange, onAddSpeakerRef, onRefetchSpeakers }:
                     items={queue.items}
                     isCollapsed={true}
                     isCurrentQueue={false}
+                    discussion={getDiscussionInfo(queue)}
                     onOpenSubqueue={() => { }}
                     onCloseQueue={() => { }}
                     onRemoveSpeaker={() => { }}
@@ -308,7 +355,9 @@ export function QueueView({ onQueueChange, onAddSpeakerRef, onRefetchSpeakers }:
                     items={currentQueue.items}
                     isCollapsed={false}
                     isCurrentQueue={true}
+                    discussion={getDiscussionInfo(currentQueue)}
                     onOpenSubqueue={(name) => handleOpenSubqueue(currentQueue.id, name)}
+                    onOpenDiscussionQueue={() => handleOpenDiscussionQueue(currentQueue.id)}
                     onCloseQueue={() => handleCloseQueue(currentQueue.id)}
                     onRemoveSpeaker={(itemId) => handleRemoveSpeaker(currentQueue.id, itemId)}
                     onNextSpeaker={() => handleNextSpeaker(currentQueue.id)}

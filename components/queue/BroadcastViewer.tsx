@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { QueueCard, LocalQueueItem } from "./QueueCard"
+import { QueueCard, LocalQueueItem, DiscussionInfo } from "./QueueCard"
 
 interface LocalQueue {
     id: string
@@ -11,6 +11,21 @@ interface LocalQueue {
     isActive: boolean
     createdAt: number
     speakerCounts: Record<string, number>
+    type?: "normal" | "discussion"
+    discussionStartedAt?: number
+    currentSpeakerStartedAt?: number | null
+    totalDurationSec?: number
+    perSpeakerDurationSec?: number
+}
+
+function getDiscussionInfo(q: LocalQueue): DiscussionInfo | null {
+    if (q.type !== "discussion" || !q.discussionStartedAt) return null
+    return {
+        discussionStartedAt: q.discussionStartedAt,
+        currentSpeakerStartedAt: q.currentSpeakerStartedAt ?? null,
+        totalDurationSec: q.totalDurationSec ?? 45 * 60,
+        perSpeakerDurationSec: q.perSpeakerDurationSec ?? 5 * 60,
+    }
 }
 
 type ConnectionStatus = "connecting" | "connected" | "disconnected"
@@ -127,6 +142,7 @@ export function BroadcastViewer({ token }: BroadcastViewerProps) {
                     isCollapsed={true}
                     isCurrentQueue={false}
                     readOnly={true}
+                    discussion={getDiscussionInfo(queue)}
                     onOpenSubqueue={noop}
                     onCloseQueue={noop}
                     onRemoveSpeaker={noop}
@@ -144,6 +160,7 @@ export function BroadcastViewer({ token }: BroadcastViewerProps) {
                     isCollapsed={false}
                     isCurrentQueue={true}
                     readOnly={true}
+                    discussion={getDiscussionInfo(currentQueue)}
                     onOpenSubqueue={noop}
                     onCloseQueue={noop}
                     onRemoveSpeaker={noop}

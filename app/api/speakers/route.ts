@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 
-// GET: Fetch all speakers
 export async function GET() {
     const session = await auth()
     if (!session) {
@@ -22,7 +21,6 @@ export async function GET() {
     }
 }
 
-// POST: Create new speaker
 export async function POST(request: NextRequest) {
     const session = await auth()
     if (!session) {
@@ -31,19 +29,15 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json()
-        const { name, type, groupIds } = body
+        const { name, groupIds } = body
 
         if (!name || typeof name !== "string") {
             return NextResponse.json({ error: "Name is required" }, { status: 400 })
         }
 
-        const validTypes = ["senate", "guest", "faculty"]
-        const speakerType = validTypes.includes(type) ? type : "guest"
-
         const speaker = await prisma.speaker.create({
             data: {
                 name: name.trim(),
-                type: speakerType,
                 groups: groupIds ? {
                     connect: groupIds.map((id: string) => ({ id }))
                 } : undefined

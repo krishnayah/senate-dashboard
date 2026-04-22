@@ -11,17 +11,17 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  discordId     String?   @unique
-  hasRequiredRole Boolean  @default(false)
-  accounts      Account[]
-  sessions      Session[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  name            String?
+  email           String?   @unique
+  emailVerified   DateTime?
+  image           String?
+  discordId       String?   @unique
+  hasRequiredRole Boolean   @default(false)
+  accounts        Account[]
+  sessions        Session[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model Account {
@@ -61,64 +61,17 @@ model VerificationToken {
 
 model Group {
   id        String    @id @default(cuid())
-  name      String    @unique // e.g., "Senate", "EBoard"
+  name      String    @unique
   speakers  Speaker[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }
 
 model Speaker {
-  id         String      @id @default(cuid())
+  id         String   @id @default(cuid())
   name       String
-  type       String      @default("guest") // Deprecated: Migration will move this to Groups
-  speakCount Int         @default(0)
+  speakCount Int      @default(0)
   groups     Group[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-
-  // Relations
-  meetingAttendance  MeetingAttendance[]
-  requiredInGroups   MeetingGroup[]       @relation("RequiredMembers")
-}
-
-model MeetingGroup {
-  id              String    @id @default(cuid())
-  name            String
-  meetings        Meeting[]
-  requiredMembers Speaker[] @relation("RequiredMembers")
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-}
-
-model Meeting {
-  id             String              @id @default(cuid())
-  title          String
-  date           DateTime            @default(now())
-  notes          String?
-  meetingGroupId String?
-  meetingGroup   MeetingGroup?       @relation(fields: [meetingGroupId], references: [id], onDelete: Cascade)
-  attendance     MeetingAttendance[]
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
-}
-
-enum AttendanceStatus {
-  PRESENT
-  LATE
-  EXCUSED
-  ABSENT
-  OTHER
-}
-
-model MeetingAttendance {
-  id        String           @id @default(cuid())
-  meetingId String
-  speakerId String
-  meeting   Meeting          @relation(fields: [meetingId], references: [id], onDelete: Cascade)
-  speaker   Speaker          @relation(fields: [speakerId], references: [id], onDelete: Cascade)
-  status    AttendanceStatus @default(PRESENT)
-  note      String?
-  createdAt DateTime         @default(now())
-
-  @@unique([meetingId, speakerId])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

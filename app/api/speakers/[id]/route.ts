@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 
-// PATCH: Update speaker name/type
 export async function PATCH(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -15,26 +14,15 @@ export async function PATCH(
     try {
         const { id } = await params
         const body = await request.json()
-        const { name, type } = body
+        const { name } = body
 
-        const updateData: { name?: string; type?: string } = {}
-
-        if (name && typeof name === "string") {
-            updateData.name = name.trim()
-        }
-
-        const validTypes = ["senate", "guest", "faculty"]
-        if (type && validTypes.includes(type)) {
-            updateData.type = type
-        }
-
-        if (Object.keys(updateData).length === 0) {
+        if (!name || typeof name !== "string") {
             return NextResponse.json({ error: "No valid fields to update" }, { status: 400 })
         }
 
         const speaker = await prisma.speaker.update({
             where: { id },
-            data: updateData,
+            data: { name: name.trim() },
         })
 
         return NextResponse.json(speaker)
@@ -44,7 +32,6 @@ export async function PATCH(
     }
 }
 
-// DELETE: Remove speaker
 export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }

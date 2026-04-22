@@ -13,7 +13,7 @@ export default function Home() {
           Developed by Jordan Krishnayah
         </p>
         <p className="max-w-[600px] text-muted-foreground md:text-xl">
-          Manage speaking queues, take committee attendance, and more.
+          Run speaking queues and manage people.
         </p>
 
         <div className="flex gap-4">
