@@ -117,13 +117,11 @@ export function QueueCard({
     }
 
     const isDiscussion = !!discussion
-    const headerGradient = isDiscussion
-        ? "bg-gradient-to-r from-indigo-600 to-purple-700"
-        : "bg-gradient-to-r from-rose-600 to-rose-700"
+    const headerColor = isDiscussion ? "bg-indigo-700" : "bg-rose-700"
 
     return (
         <div className="rounded-xl border bg-card shadow-lg overflow-hidden">
-            <div className={`${headerGradient} px-6 py-4`}>
+            <div className={`${headerColor} px-6 py-4`}>
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                     <div className="flex items-center gap-3">
                         <h2 className="text-xl font-bold text-white">{name}</h2>
