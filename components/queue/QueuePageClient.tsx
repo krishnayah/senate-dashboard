@@ -37,9 +37,9 @@ export function QueuePageClient() {
     return (
         <div className="space-y-6">
             <SpeakLeaderboard
-                key={`leaderboard-${refreshSpeakersKey}`}
                 currentQueueId={currentQueueId}
                 onAddToQueue={handleAddToQueue}
+                refreshNonce={refreshSpeakersKey}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -55,7 +55,6 @@ export function QueuePageClient() {
                         currentQueueId={currentQueueId}
                         onSpeakerAdded={handleSpeakerAdded}
                         onAddToQueue={handleAddToQueue}
-                        key={refreshSpeakersKey}
                     />
                 </div>
             </div>

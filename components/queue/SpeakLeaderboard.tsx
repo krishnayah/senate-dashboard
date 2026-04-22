@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import { useSpeakers } from "@/hooks/useSpeakers"
 import { Speaker } from "@/types"
 
@@ -8,10 +8,15 @@ interface SpeakLeaderboardProps {
     limit?: number
     currentQueueId: string | null
     onAddToQueue: (speaker: Speaker) => void
+    refreshNonce?: number
 }
 
-export function SpeakLeaderboard({ limit = 5, currentQueueId, onAddToQueue }: SpeakLeaderboardProps) {
-    const { speakers, loading } = useSpeakers()
+export function SpeakLeaderboard({ limit = 5, currentQueueId, onAddToQueue, refreshNonce = 0 }: SpeakLeaderboardProps) {
+    const { speakers, loading, fetchSpeakers } = useSpeakers()
+
+    useEffect(() => {
+        if (refreshNonce > 0) fetchSpeakers()
+    }, [refreshNonce])
 
     const ranked = useMemo(() => {
         const senators = speakers.filter(s =>
