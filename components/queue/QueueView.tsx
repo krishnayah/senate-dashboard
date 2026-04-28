@@ -201,11 +201,13 @@ export function QueueView({ onQueueChange, onAddSpeakerRef, onRefetchSpeakers }:
                     // Get speak count ONLY for this queue
                     const localSpeakCount = q.speakerCounts[speaker.id] || 0
 
-                    // Priority insertion based on local speak count
+                    // Priority insertion based on local speak count.
+                    // Start at index 1 so the current speaker (position 0) is
+                    // never displaced by a newly-added lower-count speaker.
                     const items = [...q.items]
                     let insertIndex = items.length
 
-                    for (let i = 0; i < items.length; i++) {
+                    for (let i = 1; i < items.length; i++) {
                         const itemSpeakerId = items[i].speaker.id
                         const itemLocalCount = q.speakerCounts[itemSpeakerId] || 0
 
